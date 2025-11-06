@@ -15,9 +15,9 @@ export const useSettingsSearch = (searchQuery: string) => {
 
     if (!lowerQuery) {
       const allVisible = new Set([
-        'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'fontSize', 'password',
+        'language', 'theme', 'defaultPersona', 'fontFamily', 'colorPalette', 'fontSize',
         'autoTitleGeneration', 'titleGenModel',
-        'showThoughts', 'llmProvider', 'apiKey', 'apiBaseUrl', 'temperature',
+        'showThoughts', 'temperature',
         'contextLength', 'maxOutputTokens',
         'streamInactivityTimeout', 'data', 'pdf-management'
       ]);
@@ -34,17 +34,12 @@ export const useSettingsSearch = (searchQuery: string) => {
         { id: 'fontFamily', section: 'general', texts: [t('fontFamily'), t('fontFamilyDesc'), translations.zh.fontFamily, translations.zh.fontFamilyDesc] },
         { id: 'colorPalette', section: 'general', texts: [t('colorPalette'), t('colorPaletteDesc'), t('customColor'), translations.zh.colorPalette, translations.zh.colorPaletteDesc, translations.zh.customColor, '调色板', '主题色', '颜色', 'color', 'palette', 'theme color'] },
         { id: 'fontSize', section: 'general', texts: [t('fontSize'), t('fontSizeDesc'), translations.zh.fontSize, translations.zh.fontSizeDesc, '字体大小', 'font size'] },
-        { id: 'password', section: 'general', texts: [t('password'), t('passwordDesc'), translations.zh.password, translations.zh.passwordDesc] },
-        
         // Behavior
         { id: 'autoTitleGeneration', section: 'behavior', texts: [t('autoTitleGeneration'), t('autoTitleGenerationDesc'), translations.zh.autoTitleGeneration, translations.zh.autoTitleGenerationDesc] },
         { id: 'titleGenModel', section: 'behavior', texts: [t('titleGenModel'), t('titleGenModelDesc'), translations.zh.titleGenModel, translations.zh.titleGenModelDesc] },
         { id: 'showThoughts', section: 'behavior', texts: [t('showThoughts'), t('showThoughtsDesc'), translations.zh.showThoughts, translations.zh.showThoughtsDesc] },
 
         // Advanced
-        { id: 'llmProvider', section: 'advanced', texts: [t('llmProvider'), t('llmProviderDesc'), translations.zh.llmProvider, translations.zh.llmProviderDesc] },
-        { id: 'apiKey', section: 'advanced', texts: [t('apiKey'), t('apiKeyDesc'), translations.zh.apiKey, translations.zh.apiKeyDesc] },
-        { id: 'apiBaseUrl', section: 'advanced', texts: [t('apiBaseUrl'), t('apiBaseUrlDesc'), translations.zh.apiBaseUrl, translations.zh.apiBaseUrlDesc] },
         { id: 'temperature', section: 'advanced', texts: [t('temperature'), t('temperatureDesc'), translations.zh.temperature, translations.zh.temperatureDesc] },
         { id: 'contextLength', section: 'advanced', texts: [t('contextLength'), t('contextLengthDesc'), translations.zh.contextLength, translations.zh.contextLengthDesc] },
         { id: 'streamInactivityTimeout', section: 'advanced', texts: [t('streamInactivityTimeout'), t('streamInactivityTimeoutDesc'), translations.zh.streamInactivityTimeout, translations.zh.streamInactivityTimeoutDesc] },

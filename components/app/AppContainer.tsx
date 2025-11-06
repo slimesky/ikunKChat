@@ -2,8 +2,6 @@ import React, { lazy, Suspense } from 'react';
 import { AppLayout } from './AppLayout';
 import { AppContent } from './AppContent';
 import { ModalManager } from './ModalManager';
-import PasswordView from '../PasswordView';
-import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../contexts/ToastContext';
 import { useAppInitialization } from '../../hooks/useAppInitialization';
 import { useAppSettings } from '../../hooks/useAppSettings';
@@ -22,8 +20,6 @@ const PrivacyNoticeModal = lazy(() =>
  * 优化后：使用拆分后的Hook，代码量从462行减少到约120行
  */
 export const AppContainer: React.FC = () => {
-  // 认证相关
-  const { isAuthenticated, hasPassword, handleVerified } = useAuth();
   const { addToast } = useToast();
 
   // 应用初始化相关Hook
@@ -143,11 +139,6 @@ export const AppContainer: React.FC = () => {
       toggleMobileSidebar();
     }
   };
-
-  // 认证检查
-  if (hasPassword && !isAuthenticated) {
-    return <PasswordView onVerified={handleVerified} />;
-  }
 
   // 隐私同意检查
   if (!hasConsented) {

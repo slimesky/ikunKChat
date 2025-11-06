@@ -35,8 +35,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
       : (process.env.API_KEY ? [process.env.API_KEY] : []);
     
     if (apiKeys.length === 0) {
-        const providerName = settings.llmProvider === 'openai' ? 'OpenAI' : 'Gemini';
-        addToast(`Please set your ${providerName} API key in Settings.`, 'error');
+        addToast('Please set your Gemini API key in Settings.', 'error');
         setIsLoading(false);
         return;
     }
@@ -167,8 +166,7 @@ export const useChatMessaging = ({ settings, activeChat, personas, setChats, set
         // 只在既没有主回复内容也没有思考内容时才报错
         if (!streamHadError && fullResponse.trim().length === 0 && accumulatedThoughts.trim().length === 0 && chunkCount > 0) {
           streamHadError = true;
-          const providerName = settings.llmProvider === 'openai' ? 'OpenAI' : 'Google';
-          fullResponse = `${providerName} did not return a message. This could be due to safety settings or other restrictions.`;
+          fullResponse = 'Gemini did not return a message. This could be due to safety settings or other restrictions.';
           addToast(fullResponse, 'error');
         }
         setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map(m => m.id === modelMessage.id ? { ...m, content: fullResponse || '...', thoughts: settings.showThoughts ? accumulatedThoughts : undefined, groundingMetadata: finalGroundingMetadata, thinkingTime } : m) } : c));

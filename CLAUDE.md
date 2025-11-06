@@ -18,7 +18,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Environment Variables
 Required environment variables for development and deployment:
 - `GEMINI_API_KEY` - Google Gemini API key (required)
-- `VITE_ACCESS_PASSWORD` - Optional password protection for the app
 - `VITE_TEMP_ACCESS_TOKEN` - Optional token for generating temporary access links
 - `VITE_API_BASE_URL` - Optional custom API base URL
 

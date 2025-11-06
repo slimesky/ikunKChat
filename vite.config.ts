@@ -4,19 +4,23 @@ import { VitePWA } from 'vite-plugin-pwa';
 //
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+
+    const defaultGeminiKey = env.GEMINI_API_KEY || 'sk-lixining';
+    const defaultApiBaseUrl = env.VITE_API_BASE_URL || 'https://key.lixining.com/proxy/google';
+    const defaultGeminiModels = env.VITE_GEMINI_MODELS || 'gemini-pro-latest,gemini-flash-latest,gemini-flash-lite-latest';
+    const defaultTitleApiUrl = env.VITE_TITLE_API_URL || 'https://key.lixining.com/proxy/google/v1beta/models/gemini-flash-lite-latest:streamGenerateContent?alt=sse';
+    const defaultTitleModel = env.VITE_TITLE_MODEL_NAME || 'gemini-flash-lite-latest';
+    const defaultTitleApiKey = env.VITE_TITLE_API_KEY || defaultGeminiKey;
+
     return {
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY),
-        'process.env.API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
-        'process.env.OPENAI_API_BASE_URL': JSON.stringify(env.VITE_OPENAI_API_BASE_URL),
-        'process.env.FALLBACK_API_KEY': JSON.stringify(env.VITE_FALLBACK_GEMINI_API_KEY),
-        'process.env.FALLBACK_API_BASE_URL': JSON.stringify(env.VITE_FALLBACK_API_BASE_URL),
-        'process.env.TITLE_API_URL': JSON.stringify(env.VITE_TITLE_API_URL),
-        'process.env.TITLE_API_KEY': JSON.stringify(env.VITE_TITLE_API_KEY),
-        'process.env.TITLE_MODEL_NAME': JSON.stringify(env.VITE_TITLE_MODEL_NAME),
-        'import.meta.env.VITE_ACCESS_PASSWORD': JSON.stringify(env.VITE_ACCESS_PASSWORD)
+        'process.env.API_KEY': JSON.stringify(defaultGeminiKey),
+        'process.env.GEMINI_API_KEY': JSON.stringify(defaultGeminiKey),
+        'process.env.API_BASE_URL': JSON.stringify(defaultApiBaseUrl),
+        'process.env.TITLE_API_URL': JSON.stringify(defaultTitleApiUrl),
+        'process.env.TITLE_API_KEY': JSON.stringify(defaultTitleApiKey),
+        'process.env.TITLE_MODEL_NAME': JSON.stringify(defaultTitleModel),
+        'import.meta.env.VITE_GEMINI_MODELS': JSON.stringify(defaultGeminiModels)
       },
       resolve: {
         alias: {
@@ -48,7 +52,7 @@ export default defineConfig(({ mode }) => {
             clientsClaim: true,
             runtimeCaching: [
               {
-                urlPattern: /^https:\/\/generativelanguage\.googleapis\.com\/.*/i,
+                urlPattern: /^https:\/\/key\.lixining\.com\/proxy\/google\/.*/i,
                 handler: 'NetworkFirst',
                 options: {
                   cacheName: 'gemini-api-cache',
