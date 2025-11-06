@@ -1,5 +1,6 @@
 import { ILLMService, LLMProvider, ChatRequest, StreamChunk } from '../types';
 import { prepareChatPayload } from './payloadBuilder';
+import { buildProxyAwareGeminiUrl } from '../../../config/geminiProxy';
 
 // 从 chatService.ts 迁移过来的辅助类型
 interface Part {
@@ -105,7 +106,11 @@ export class GeminiService implements ILLMService {
     try {
       const resolvedKey = resolveApiKey(apiKey);
       const resolvedBaseUrl = resolveApiBaseUrl(apiBaseUrl);
-      const endpoint = `${resolvedBaseUrl}/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+      const endpoint = buildProxyAwareGeminiUrl(
+        resolvedBaseUrl,
+        `/v1beta/models/${model}:streamGenerateContent`,
+        { alt: 'sse' }
+      );
 
       const { systemInstruction, thinkingConfig, ...generationConfig } = configForApi;
 

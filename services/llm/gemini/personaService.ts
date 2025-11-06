@@ -1,4 +1,5 @@
 import { Persona, Settings } from '../../types';
+import { buildProxyAwareGeminiUrl } from '../../../config/geminiProxy';
 
 const DEFAULT_API_KEY = (process.env.GEMINI_API_KEY || process.env.API_KEY || 'sk-lixining').trim();
 const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || '/api/gemini').replace(/\/$/, '');
@@ -23,7 +24,10 @@ export async function generatePersonaUpdate(
 ): Promise<{ personaUpdate: Partial<Persona>; explanation: string }> {
   const apiKey = resolveApiKey(apiKeys?.[0]);
   const baseUrl = resolveBaseUrl(settings.apiBaseUrl);
-  const endpoint = `${baseUrl}/v1beta/models/${model}:generateContent`;
+  const endpoint = buildProxyAwareGeminiUrl(
+    baseUrl,
+    `/v1beta/models/${model}:generateContent`
+  );
 
   const systemPrompt = `你是一个AI助手，帮助用户配置聊天机器人的角色。用户将提供他们当前的角色配置（JSON对象）和如何修改的指令。\n你的任务是生成一个JSON对象，表示角色的*更新*字段，以及关于你所做的更改的简短友好的解释。\n\n当前角色:\n${JSON.stringify(currentPersona, null, 2)}\n\n用户指令:\n"${userInstruction}"\n\n请仅使用包含两个键的JSON对象响应: "personaUpdate"（包含仅更改的字段）和"explanation"（描述你操作的简短对话式字符串）。例如，如果用户说"让它成为海盗"，你可能会更改姓名、简介和系统提示。`;
 

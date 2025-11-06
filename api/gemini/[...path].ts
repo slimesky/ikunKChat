@@ -34,6 +34,22 @@ function buildCorsHeaders(request: VercelRequest): Record<string, string> {
 
 function buildTargetUrl(request: VercelRequest): string {
   const url = new URL(request.url ?? '', `https://${request.headers.host || 'localhost'}`);
+  const encodedPath = url.searchParams.get('path');
+  if (encodedPath) {
+    url.searchParams.delete('path');
+    let decoded = encodedPath;
+    try {
+      decoded = decodeURIComponent(encodedPath);
+    } catch (error) {
+      console.warn('Failed to decode proxied Gemini path, using raw value:', error);
+    }
+
+    const [rawPath, rawSearch] = decoded.split('?');
+    const normalizedPath = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
+    const search = rawSearch ? `?${rawSearch}` : '';
+    return `${DEFAULT_PROXY_BASE}${normalizedPath}${search}`;
+  }
+
   const pathSuffix = url.pathname.replace(/^\/api\/gemini/, '');
   const trimmedPath = pathSuffix.replace(/^\/+/g, '');
   const targetPath = trimmedPath ? `/${trimmedPath}` : '';
