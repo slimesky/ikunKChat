@@ -109,7 +109,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ versionInfo, ...pr
 
           {showAllSections || activeTab === 'advanced' ? (
             <SettingsSection title={t('advanced')} isVisible={showAllSections || sectionVisibility.advanced}>
-              <AdvancedSettings {...props} visibleIds={visibleSettingIds} availableModels={props.availableModels} />
+              <AdvancedSettings {...props} visibleIds={visibleSettingIds} />
             </SettingsSection>
           ) : null}
           

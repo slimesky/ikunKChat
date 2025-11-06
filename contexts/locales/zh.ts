@@ -73,14 +73,6 @@ export const zh = {
     behavior: '行为',
     advanced: '高级',
     model: '模型',
-    apiKey: 'API 密钥',
-    apiKeyDesc: '您的密钥安全地存储在本地。',
-    apiKeyPlaceholder: '输入一个或多个 API 密钥，用换行符或逗号分隔。',
-    apiKeyEnvVar: '密钥已由环境变量设置',
-    apiBaseUrl: 'API Base URL',
-    apiBaseUrlDesc: '可选。使用代理或不同的 API 端点。',
-    llmProvider: '模型服务商',
-    llmProviderDesc: '选择用于聊天的后端大语言模型服务。',
     langDetectModel: '语言检测模型',
 
     autoTitleGeneration: '自动生成聊天标题',
@@ -125,32 +117,6 @@ export const zh = {
     contextLengthDesc: '发送过去的旧消息数量。0代表无限。',
     streamInactivityTimeout: '流响应超时（秒）',
     streamInactivityTimeoutDesc: '如果在此期间未收到任何数据，则中止请求。防止在需要长时间思考的模型上卡住。',
-    // Password View
-    password_required: '访问密码',
-    password_prompt: '请输入密码以访问ikunKChat',
-    enter_password: '输入密码',
-    incorrect_password: '密码不正确，哎哟你干嘛~',
-    continue: '开始练习',
-    // Password Settings
-    password: '访问密码',
-    passwordDesc: '设置访问应用的密码，留空则不需要密码。',
-    passwordPlaceholder: '输入访问密码...',
-
-    // Privacy Notice
-    privacyNoticeTitle: '服务使用及免责声明',
-    privacyNoticeIntro: '在您使用本服务前，请务必仔细阅读并充分理解以下各条款。您的继续使用行为将被视为对本声明全部内容的接受。',
-    privacyComplianceTitle: '1. ✅ 合法合规',
-    privacyComplianceText: '本站坚决遵守《中华人民共和国网络安全法》、《中华人民共和国数据安全法》、《中华人民共和国个人信息保护法》等国家法律，合法运营。',
-    privacyDataTitle: '2. 🔒 绝对隐私',
-    privacyDataIntro: '您的数据，由您全权掌控：',
-    privacyDataPoint1: '<strong>服务器无痕</strong>：不记录、不存储任何聊天内容。',
-    privacyDataPoint2: '<strong>数据纯本地</strong>：对话记录仅保存在您的浏览器，可随时自清。',
-    privacyDataPoint3: '<strong>完全匿名</strong>：无账户，无登录，我不知道您是谁。',
-    privacyUserResponsibilityTitle: '3. ⚠️ 责任自负',
-    privacyUserResponsibilityText: '本站仅为技术工具，内容由您生成。您需对生成内容独立承担全部法律责任。请勿用于违法活动，否则后果自负。',
-    privacyConfirmationPrompt: '为继续使用本服务，请在下方输入框内手动输入“<code class="text-[var(--accent-color)] bg-black/10 px-1 py-0.5 rounded">{confirmationText}</code>”以确认您已完全理解并接受本声明的全部内容。',
-    privacyConfirmationText: '我已知悉网站合法并尊重用户隐私会遵守法律使用',
-    privacyInputPlaceholder: '请在此输入确认文本',
     confirm: '确认',
 
     // Update Notice

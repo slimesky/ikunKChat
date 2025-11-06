@@ -43,7 +43,6 @@ const STORAGE_DB_VERSION = 1;
 // localStorage 只存储轻量配置
 const SETTINGS_KEY = 'kchat-settings';
 const ACTIVE_CHAT_KEY = 'kchat-active-chat';
-const PRIVACY_CONSENT_KEY = 'kchat-privacy-consent';
 const LAST_READ_VERSION_KEY = 'kchat-last-read-version';
 const MIGRATION_STATUS_KEY = 'kchat-migration-status';
 
@@ -434,30 +433,7 @@ export async function exportDataV2(data: {
   return exportData;
 }
 
-// ========== 隐私和版本管理（保留在 localStorage） ==========
-
-export function loadPrivacyConsentV2(): { consented: boolean; version: string } | null {
-  try {
-    const saved = localStorage.getItem(PRIVACY_CONSENT_KEY);
-    return saved ? JSON.parse(saved) : null;
-  } catch (error) {
-    console.error('[StorageV2] 加载隐私同意失败:', error);
-    return null;
-  }
-}
-
-export function savePrivacyConsentV2(version: string): void {
-  try {
-    const consent = {
-      consented: true,
-      version: version,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(PRIVACY_CONSENT_KEY, JSON.stringify(consent));
-  } catch (error) {
-    console.error('[StorageV2] 保存隐私同意失败:', error);
-  }
-}
+// ========== 版本管理（保留在 localStorage） ==========
 
 export function loadLastReadVersionV2(): string | null {
   try {

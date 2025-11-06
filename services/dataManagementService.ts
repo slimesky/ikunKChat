@@ -70,7 +70,6 @@ export const clearAllData = () => {
     localStorage.removeItem(ACTIVE_CHAT_KEY);
     // 清理记忆数据（如果存在）
     localStorage.removeItem('kchat-persona-memories');
-    // We don't clear privacy consent here, as it should persist
 };
 
 export const clearChatHistory = () => {

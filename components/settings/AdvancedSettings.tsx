@@ -1,77 +1,19 @@
 import React from 'react';
 import { Settings } from '../../types';
-import { CustomSelect, SelectOption } from '../CustomSelect';
 import { SettingsItem } from '../SettingsItem';
-import { Switch } from '../Switch';
 import { useLocalization } from '../../contexts/LocalizationContext';
-import { formatModelName } from '../../utils/textUtils';
 
 interface AdvancedSettingsProps {
   settings: Settings;
   onSettingsChange: (newSettings: Partial<Settings>) => void;
   visibleIds: Set<string>;
-  availableModels: string[];
 }
 
-const isApiKeySetByEnv = false;
-const isApiBaseUrlSetByEnv = false;
-
-export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, onSettingsChange, visibleIds, availableModels }) => {
+export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ settings, onSettingsChange, visibleIds }) => {
   const { t } = useLocalization();
-  const modelOptions: SelectOption[] = availableModels.map(m => ({ value: m, label: formatModelName(m) }));
-
-  const handleApiKeyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const keys = e.target.value.split(/[\n,]+/).map(k => k.trim()).filter(Boolean);
-    onSettingsChange({ apiKey: keys });
-  };
-
-  const llmProviderOptions: SelectOption[] = [
-    { value: 'gemini', label: 'Google Gemini' },
-    { value: 'openai', label: 'OpenAI' },
-  ];
 
   return (
     <>
-      {visibleIds.has('llmProvider') && (
-        <SettingsItem label={t('llmProvider')} description={t('llmProviderDesc')}>
-          <CustomSelect
-            options={llmProviderOptions}
-            value={settings.llmProvider || 'gemini'}
-            onChange={(value) => onSettingsChange({ llmProvider: value as 'gemini' | 'openai' })}
-            className="w-60"
-          />
-        </SettingsItem>
-      )}
-      {visibleIds.has('apiKey') && (
-        <SettingsItem label={t('apiKey')} description={t('apiKeyDesc')}>
-           <textarea 
-              value={(settings.apiKey || []).join('\n')}
-              onChange={handleApiKeyChange}
-              disabled={isApiKeySetByEnv}
-              placeholder={isApiKeySetByEnv ? t('apiKeyEnvVar') : t('apiKeyPlaceholder')}
-              className="input-glass max-w-60 min-h-24"
-              rows={3}
-           />
-        </SettingsItem>
-      )}
-      {visibleIds.has('apiBaseUrl') && (
-        <SettingsItem label={t('apiBaseUrl')} description={t('apiBaseUrlDesc')}>
-          <input
-            type="text"
-            value={settings.apiBaseUrl || ''}
-            onChange={e => onSettingsChange({ apiBaseUrl: e.target.value })}
-            disabled={isApiBaseUrlSetByEnv}
-            placeholder={
-              isApiBaseUrlSetByEnv
-                ? t('apiKeyEnvVar')
-                : settings.llmProvider === 'openai'
-                  ? 'https://api.openai.com'
-                  : 'https://generativelanguage.googleapis.com'
-            }
-            className="input-glass w-60"
-          />
-        </SettingsItem>
-      )}
       {visibleIds.has('temperature') && (
         <SettingsItem label={t('temperature')} description={t('temperatureDesc')}>
           <div className="flex items-center gap-4 w-60">

@@ -1,12 +1,24 @@
 import { ILLMService, LLMProvider, ChatRequest, StreamChunk } from '../types';
 import { prepareChatPayload } from './payloadBuilder';
-import { executeStreamWithKeyRotation } from './apiExecutor';
-import { GenerateContentResponse } from '@google/genai';
 
 // 从 chatService.ts 迁移过来的辅助类型
 interface Part {
   text?: string;
   inlineData?: { mimeType: string; data: string; };
+}
+
+const DEFAULT_API_KEY = (process.env.GEMINI_API_KEY || process.env.API_KEY || 'sk-lixining').trim();
+const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || 'https://key.lixining.com/proxy/google').replace(/\/$/, '');
+
+function resolveApiKey(candidate?: string): string {
+  const key = candidate?.trim();
+  return key && key.length > 0 ? key : DEFAULT_API_KEY;
+}
+
+function resolveApiBaseUrl(candidate?: string): string {
+  const base = candidate?.trim();
+  const selected = base && base.length > 0 ? base : DEFAULT_API_BASE_URL;
+  return selected.replace(/\/$/, '');
 }
 
 export class GeminiService implements ILLMService {
@@ -87,78 +99,159 @@ export class GeminiService implements ILLMService {
     // 1. 准备 Payload
     const { formattedHistory, configForApi } = prepareChatPayload(messages, config, persona, showThoughts);
     
-    // 从最后一条用户消息中提取附件和文本内容
     const lastUserMessage = messages[messages.length - 1];
-    const attachments = lastUserMessage.attachments || [];
-    const newMessage = lastUserMessage.content;
-
-    const messageParts: Part[] = attachments.map(att => ({
-        inlineData: { mimeType: att.mimeType, data: att.data! }
-    }));
-    if (newMessage) messageParts.push({ text: newMessage });
+    const newMessage = lastUserMessage?.content || '';
 
     try {
-      // 2. 执行流式请求
-      // 注意：executeStreamWithKeyRotation 接受一个API密钥数组，我们这里只传递一个
-      const geminiStream: AsyncGenerator<GenerateContentResponse> = executeStreamWithKeyRotation(
-        [apiKey], 
-        async (ai) => {
-          const chat = ai.chats.create({
-            model,
-            history: formattedHistory,
-            config: configForApi,
-          });
-          return chat.sendMessageStream({ message: messageParts });
-        },
-        apiBaseUrl
-      );
+      const resolvedKey = resolveApiKey(apiKey);
+      const resolvedBaseUrl = resolveApiBaseUrl(apiBaseUrl);
+      const endpoint = `${resolvedBaseUrl}/v1beta/models/${model}:streamGenerateContent?alt=sse`;
 
-      // 3. 转换流的输出格式
-      for await (const geminiChunk of geminiStream) {
-        if (geminiChunk.candidates && geminiChunk.candidates.length > 0) {
-          const candidate = geminiChunk.candidates[0];
-          const content = candidate.content;
-          
-          if (content && content.parts && content.parts.length > 0) {
-            // 检查是否有思考内容的标记
-            // Gemini API 在思考模式下会在 parts 中标记 thought
-            for (const part of content.parts) {
-              if (part.text) {
-                // 检查 part 的元数据，判断是 thought 还是 content
-                // @ts-ignore - thoughtMetadata 可能存在于 part 对象中
-                const isThought = part.thought || part.thoughtMetadata;
-                
-                if (isThought) {
-                  // 这是思考内容
-                  yield {
-                    type: 'thought',
-                    payload: part.text,
-                  };
-                } else {
-                  // 这是普通回复内容
-                  yield {
-                    type: 'content',
-                    payload: part.text,
-                  };
-                }
-              }
+      const { systemInstruction, thinkingConfig, ...generationConfig } = configForApi;
+
+      const requestBody: any = {
+        model,
+        contents: formattedHistory,
+        generationConfig: {
+          temperature: generationConfig.temperature,
+          maxOutputTokens: generationConfig.maxOutputTokens,
+        },
+      };
+
+      if (thinkingConfig) {
+        requestBody.generationConfig.thinkingConfig = thinkingConfig;
+      }
+
+      if (systemInstruction) {
+        requestBody.systemInstruction = {
+          role: 'system',
+          parts: [{ text: systemInstruction }],
+        };
+      }
+
+      // Gemini 要求请求中至少包含一个 part，这里确保最后一条消息文本也会作为 part 发送
+      if (requestBody.contents.length > 0) {
+        const lastMessage = requestBody.contents[requestBody.contents.length - 1];
+        const hasParts = Array.isArray(lastMessage?.parts) && lastMessage.parts.length > 0;
+        if (!hasParts && newMessage) {
+          lastMessage.parts = [{ text: newMessage }];
+        }
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': resolvedKey,
+          Accept: 'text/event-stream',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok || !response.body) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Gemini request failed with status ${response.status}: ${errorText}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let eventLines: string[] = [];
+
+      const parseEventLines = (lines: string[]): StreamChunk[] => {
+        const chunks: StreamChunk[] = [];
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === '[DONE]') {
+            continue;
+          }
+
+          let parsed: any;
+          try {
+            parsed = JSON.parse(payload);
+          } catch (error) {
+            console.warn('Failed to parse Gemini SSE payload:', error, payload);
+            continue;
+          }
+
+          if (parsed.error) {
+            const message = parsed.error.message || 'Unknown Gemini error.';
+            chunks.push({ type: 'error', payload: message });
+            continue;
+          }
+
+          if (!parsed.candidates || parsed.candidates.length === 0) {
+            continue;
+          }
+
+          const candidate = parsed.candidates[0];
+          const content = candidate?.content;
+          const parts = content?.parts as Part[] | undefined;
+          if (!parts || parts.length === 0) {
+            continue;
+          }
+
+          for (const part of parts) {
+            if (!part.text) continue;
+            // @ts-ignore - thought metadata is not typed but can exist on the payload
+            const isThought = part.thought || part.thoughtMetadata;
+            if (isThought) {
+              chunks.push({ type: 'thought', payload: part.text });
+            } else {
+              chunks.push({ type: 'content', payload: part.text });
             }
+          }
+        }
+        return chunks;
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, newlineIndex).trimEnd();
+          buffer = buffer.slice(newlineIndex + 1);
+
+          if (line === '') {
+            if (eventLines.length > 0) {
+              for (const chunk of parseEventLines(eventLines)) {
+                yield chunk;
+              }
+              eventLines = [];
+            }
+          } else {
+            eventLines.push(line);
           }
         }
       }
 
+      if (eventLines.length > 0) {
+        for (const chunk of parseEventLines(eventLines)) {
+          yield chunk;
+        }
+      }
+
+      if (buffer.trim().length > 0) {
+        for (const chunk of parseEventLines(buffer.trim().split(/\r?\n/))) {
+          yield chunk;
+        }
+      }
+
     } catch (error: any) {
-      console.error("Error in Gemini stream:", error);
+      console.error('Error in Gemini stream:', error);
       yield {
         type: 'error',
-        payload: error.message || 'An unknown error occurred in the Gemini service.',
+        payload: error?.message || 'An unknown error occurred in the Gemini service.',
       };
     } finally {
-      // 4. 确保流的末尾有一个 'end' 信号
-      yield {
-        type: 'end',
-        payload: '',
-      };
+      yield { type: 'end', payload: '' };
     }
   }
 }

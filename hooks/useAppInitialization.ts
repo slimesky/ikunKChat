@@ -2,16 +2,8 @@ import { useState, useEffect } from 'react';
 import { usePWAUpdate } from './usePWAUpdate';
 import { useUpdateService } from '../services/updateService';
 import { initDB, migrateAttachmentsFromLocalStorage } from '../services/indexedDBService';
-import { loadPrivacyConsent, savePrivacyConsent } from '../services/storageService';
-
-const PRIVACY_STATEMENT_VERSION = '1.0.0';
 
 interface UseAppInitializationReturn {
-  // 隐私同意相关
-  hasConsented: boolean;
-  setHasConsented: (consented: boolean) => void;
-  handlePrivacyConsent: () => void;
-  
   // PWA更新相关
   needRefresh: boolean;
   updateStatus: string;
@@ -28,14 +20,9 @@ interface UseAppInitializationReturn {
 
 /**
  * AppInitialization Hook - 处理应用初始化相关逻辑
- * 职责：数据库初始化、PWA更新管理、隐私同意管理
+ * 职责：数据库初始化、PWA更新管理
  */
 export const useAppInitialization = (): UseAppInitializationReturn => {
-  const [hasConsented, setHasConsented] = useState(() => {
-    const consent = loadPrivacyConsent();
-    return consent?.consented && consent.version === PRIVACY_STATEMENT_VERSION;
-  });
-
   const [showUpdateNotice, setShowUpdateNotice] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
@@ -75,12 +62,6 @@ export const useAppInitialization = (): UseAppInitializationReturn => {
     }
   }, [shouldShowUpdateNotice, getLatestVersion]);
 
-  // 处理隐私同意
-  const handlePrivacyConsent = () => {
-    savePrivacyConsent(PRIVACY_STATEMENT_VERSION);
-    setHasConsented(true);
-  };
-
   // 处理立即更新
   const handleUpdateNow = () => {
     updateServiceWorker();
@@ -118,9 +99,6 @@ export const useAppInitialization = (): UseAppInitializationReturn => {
   };
 
   return {
-    hasConsented,
-    setHasConsented,
-    handlePrivacyConsent,
     needRefresh,
     updateStatus,
     updateServiceWorker,

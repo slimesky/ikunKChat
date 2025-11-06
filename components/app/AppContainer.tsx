@@ -1,9 +1,7 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { AppLayout } from './AppLayout';
 import { AppContent } from './AppContent';
 import { ModalManager } from './ModalManager';
-import PasswordView from '../PasswordView';
-import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../contexts/ToastContext';
 import { useAppInitialization } from '../../hooks/useAppInitialization';
 import { useAppSettings } from '../../hooks/useAppSettings';
@@ -12,24 +10,16 @@ import { useAppUIManager } from '../../hooks/useAppUIManager';
 import { useAppOperations } from '../../hooks/useAppOperations';
 import { exportData, exportSelectedChats } from '../../services/storageService';
 
-const PrivacyNoticeModal = lazy(() =>
-  import('../PrivacyNoticeModal').then((module) => ({ default: module.PrivacyNoticeModal }))
-);
-
 /**
  * AppContainer - 主应用容器组件
  * 职责：业务逻辑协调和组件渲染
  * 优化后：使用拆分后的Hook，代码量从462行减少到约120行
  */
 export const AppContainer: React.FC = () => {
-  // 认证相关
-  const { isAuthenticated, hasPassword, handleVerified } = useAuth();
   const { addToast } = useToast();
 
   // 应用初始化相关Hook
   const {
-    hasConsented,
-    handlePrivacyConsent,
     needRefresh,
     updateStatus,
     updateServiceWorker,
@@ -143,20 +133,6 @@ export const AppContainer: React.FC = () => {
       toggleMobileSidebar();
     }
   };
-
-  // 认证检查
-  if (hasPassword && !isAuthenticated) {
-    return <PasswordView onVerified={handleVerified} />;
-  }
-
-  // 隐私同意检查
-  if (!hasConsented) {
-    return (
-      <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
-        <PrivacyNoticeModal onConfirm={handlePrivacyConsent} />
-      </Suspense>
-    );
-  }
 
   return (
     <AppLayout

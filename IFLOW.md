@@ -75,7 +75,6 @@ npm install
 GEMINI_API_KEY="AIzaSy..."
 
 # 可选：设置网站的访问密码
-VITE_ACCESS_PASSWORD="your_password"
 
 # 可选：设置用于生成临时访问链接的令牌
 VITE_TEMP_ACCESS_TOKEN="your_temp_token_string"
