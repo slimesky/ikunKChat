@@ -1,7 +1,8 @@
 import { Settings } from '../../../types';
 
+const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || '/api/gemini').replace(/\/$/, '');
 const DEFAULT_TITLE_MODEL = process.env.TITLE_MODEL_NAME || 'gemini-flash-lite-latest';
-const DEFAULT_TITLE_API_URL = process.env.TITLE_API_URL || 'https://key.lixining.com/proxy/google/v1beta/models/gemini-flash-lite-latest:streamGenerateContent?alt=sse';
+const DEFAULT_TITLE_API_URL = process.env.TITLE_API_URL || `${DEFAULT_API_BASE_URL}/v1beta/models/gemini-flash-lite-latest:streamGenerateContent?alt=sse`;
 const DEFAULT_API_KEY = (process.env.TITLE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || 'sk-lixining').trim();
 
 function resolveTitleApiKey(candidate?: string): string {

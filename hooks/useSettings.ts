@@ -9,7 +9,7 @@ const DEFAULT_GEMINI_MODELS = ((import.meta as any).env?.VITE_GEMINI_MODELS || '
   .filter((m: string) => m.length > 0);
 
 const DEFAULT_GEMINI_KEY = (process.env.GEMINI_API_KEY || process.env.API_KEY || 'sk-lixining').trim();
-const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || 'https://key.lixining.com/proxy/google').replace(/\/$/, '');
+const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || '/api/gemini').replace(/\/$/, '');
 const DEFAULT_TITLE_MODEL = 'gemini-flash-lite-latest';
 const DEFAULT_MODEL = DEFAULT_GEMINI_MODELS[0] || 'gemini-pro-latest';
 

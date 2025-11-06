@@ -6,9 +6,9 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
 
     const defaultGeminiKey = env.GEMINI_API_KEY || 'sk-lixining';
-    const defaultApiBaseUrl = env.VITE_API_BASE_URL || 'https://key.lixining.com/proxy/google';
+    const defaultApiBaseUrl = (env.VITE_API_BASE_URL || '/api/gemini').replace(/\/$/, '');
     const defaultGeminiModels = env.VITE_GEMINI_MODELS || 'gemini-pro-latest,gemini-flash-latest,gemini-flash-lite-latest';
-    const defaultTitleApiUrl = env.VITE_TITLE_API_URL || 'https://key.lixining.com/proxy/google/v1beta/models/gemini-flash-lite-latest:streamGenerateContent?alt=sse';
+    const defaultTitleApiUrl = env.VITE_TITLE_API_URL || `${defaultApiBaseUrl}/v1beta/models/gemini-flash-lite-latest:streamGenerateContent?alt=sse`;
     const defaultTitleModel = env.VITE_TITLE_MODEL_NAME || 'gemini-flash-lite-latest';
     const defaultTitleApiKey = env.VITE_TITLE_API_KEY || defaultGeminiKey;
 
@@ -26,6 +26,15 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      server: {
+        proxy: {
+          '/api/gemini': {
+            target: 'https://key.lixining.com/proxy/google',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api\/gemini/, ''),
+          },
+        },
       },
       publicDir: 'public',
       build: {
@@ -52,7 +61,7 @@ export default defineConfig(({ mode }) => {
             clientsClaim: true,
             runtimeCaching: [
               {
-                urlPattern: /^https:\/\/key\.lixining\.com\/proxy\/google\/.*/i,
+                urlPattern: ({ url }) => url.pathname.startsWith('/api/gemini/') || url.href.startsWith('https://key.lixining.com/proxy/google/'),
                 handler: 'NetworkFirst',
                 options: {
                   cacheName: 'gemini-api-cache',

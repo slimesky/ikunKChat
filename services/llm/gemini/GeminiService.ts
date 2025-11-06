@@ -8,7 +8,7 @@ interface Part {
 }
 
 const DEFAULT_API_KEY = (process.env.GEMINI_API_KEY || process.env.API_KEY || 'sk-lixining').trim();
-const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || 'https://key.lixining.com/proxy/google').replace(/\/$/, '');
+const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || '/api/gemini').replace(/\/$/, '');
 
 function resolveApiKey(candidate?: string): string {
   const key = candidate?.trim();
