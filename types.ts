@@ -90,7 +90,6 @@ export interface Settings {
   temperature?: number;
   maxOutputTokens?: number;
   contextLength?: number;
-  password?: string;
   pdfQuality?: 'sd' | 'hd' | 'uhd';
   streamInactivityTimeout?: number;
   fontSize?: number;

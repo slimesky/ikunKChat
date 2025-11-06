@@ -73,14 +73,6 @@ export const en = {
     behavior: 'Behavior',
     advanced: 'Advanced',
     model: 'Model',
-    apiKey: 'API Key',
-    apiKeyDesc: 'Your key is stored locally and securely.',
-    apiKeyPlaceholder: 'Enter one or more API keys, separated by newlines or commas.',
-    apiKeyEnvVar: 'Key set by environment variable',
-    apiBaseUrl: 'API Base URL',
-    apiBaseUrlDesc: 'Optional. Use a proxy or a different API endpoint.',
-    llmProvider: 'Model Service Provider',
-    llmProviderDesc: 'Choose the backend large language model service for chat.',
     langDetectModel: 'Language Detection Model',
     autoTitleGeneration: 'Auto-generate chat titles',
     autoTitleGenerationDesc: 'Create a title and icon for new chats.',
@@ -124,17 +116,6 @@ export const en = {
     contextLengthDesc: 'Number of past messages to send. 0 for infinite.',
     streamInactivityTimeout: 'Stream Timeout (seconds)',
     streamInactivityTimeoutDesc: 'Abort the request if no data is received for this duration. Prevents getting stuck on long-thinking models.',
-    // Password View
-    password_required: 'Password Required',
-    password_prompt: 'Please enter the password to access ikunKChat',
-    enter_password: 'Enter password',
-    incorrect_password: 'Incorrect password. Please try again.',
-    continue: 'Continue',
-    // Password Settings
-    password: 'Access Password',
-    passwordDesc: 'Set a password to access the app. Leave empty to disable password protection.',
-    passwordPlaceholder: 'Enter access password...',
-
     // Privacy Notice
     privacyNoticeTitle: 'Terms of Service and Disclaimer',
     privacyNoticeIntro: 'Before using this service, please read and fully understand the following terms. Your continued use of the service will be deemed as acceptance of this entire statement.',

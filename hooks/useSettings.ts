@@ -1,36 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Settings } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
-import { createLLMService } from '../services/llm/llmFactory';
 import { loadSettings, saveSettings } from '../services/storageService';
-import { USE_EMERGENCY_ROUTE } from '../emergency.config';
+
+const DEFAULT_GEMINI_MODELS = ((import.meta as any).env?.VITE_GEMINI_MODELS || 'gemini-pro-latest,gemini-flash-latest,gemini-flash-lite-latest')
+  .split(',')
+  .map((m: string) => m.trim())
+  .filter((m: string) => m.length > 0);
+
+const DEFAULT_GEMINI_KEY = (process.env.GEMINI_API_KEY || process.env.API_KEY || 'sk-lixining').trim();
+const DEFAULT_API_BASE_URL = (process.env.API_BASE_URL || 'https://key.lixining.com/proxy/google').replace(/\/$/, '');
+const DEFAULT_TITLE_MODEL = 'gemini-flash-lite-latest';
+const DEFAULT_MODEL = DEFAULT_GEMINI_MODELS[0] || 'gemini-pro-latest';
 
 const defaultSettings: Settings = {
   theme: 'apple-light',
   language: 'zh',
-  fontFamily: 'lxgw',
+  fontFamily: 'system',
   colorPalette: 'neutral',
   customColor: undefined,
-  apiKey: [],
-  defaultModel: '',
-  defaultPersona: 'default-math-assistant',
+  apiKey: [DEFAULT_GEMINI_KEY],
+  defaultModel: DEFAULT_MODEL,
+  defaultPersona: 'default-assistant',
   autoTitleGeneration: true,
-  titleGenerationModel: '',
+  titleGenerationModel: DEFAULT_TITLE_MODEL,
   showThoughts: true,
   optimizeFormatting: false,
   thinkDeeper: false,
-  apiBaseUrl: '',
+  apiBaseUrl: DEFAULT_API_BASE_URL,
   temperature: 0.7,
   maxOutputTokens: 999999999,
   contextLength: 50,
-  password: undefined,
   pdfQuality: 'hd',
   fontSize: 100,
+  llmProvider: 'gemini',
 };
 
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableModels, setAvailableModels] = useState<string[]>(DEFAULT_GEMINI_MODELS);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const { setLanguage } = useLocalization();
 
@@ -38,46 +46,18 @@ export const useSettings = () => {
     const loadedSettings = loadSettings();
     const initialSettings = { ...defaultSettings, ...loadedSettings };
 
-    // Determine API credentials based on the emergency switch and env vars
-    const useEmergency = USE_EMERGENCY_ROUTE && process.env.FALLBACK_API_BASE_URL;
-    
-    // 获取 Gemini 和 OpenAI 的环境变量
-    const geminiApiKey = useEmergency
-      ? process.env.FALLBACK_API_KEY
-      : process.env.GEMINI_API_KEY;
-    const geminiApiBaseUrl = useEmergency
-      ? process.env.FALLBACK_API_BASE_URL
-      : process.env.API_BASE_URL;
-    
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    const openaiApiBaseUrl = process.env.OPENAI_API_BASE_URL;
+    initialSettings.llmProvider = 'gemini';
+    initialSettings.apiBaseUrl = DEFAULT_API_BASE_URL;
+    initialSettings.apiKey = [DEFAULT_GEMINI_KEY];
 
-    // 只有当用户没有手动配置 API Key 时，才使用环境变量
-    // 这样用户在设置中手动填写的 key 不会被环境变量覆盖
-    const hasUserApiKey = loadedSettings?.apiKey && Array.isArray(loadedSettings.apiKey) && loadedSettings.apiKey.length > 0 && loadedSettings.apiKey[0].trim() !== '';
-    const hasGeminiEnvKey = geminiApiKey && geminiApiKey.trim() && geminiApiKey.trim().length > 0;
-    const hasOpenAIEnvKey = openaiApiKey && openaiApiKey.trim() && openaiApiKey.trim().length > 0;
+    if (!DEFAULT_GEMINI_MODELS.includes(initialSettings.defaultModel)) {
+      initialSettings.defaultModel = DEFAULT_MODEL;
+    }
 
-    // 只有在用户没有手动配置时，才使用环境变量
-    if (!hasUserApiKey) {
-      if (hasGeminiEnvKey) {
-        // Gemini 有配置，优先使用
-        initialSettings.llmProvider = 'gemini';
-        initialSettings.apiKey = [geminiApiKey!.trim()];
-        initialSettings.apiBaseUrl = geminiApiBaseUrl || '';
-      } else if (hasOpenAIEnvKey) {
-        // Gemini 没配置，但 OpenAI 有配置
-        initialSettings.llmProvider = 'openai';
-        initialSettings.apiKey = [openaiApiKey!.trim()];
-        initialSettings.apiBaseUrl = openaiApiBaseUrl || '';
-      }
+    if (!DEFAULT_GEMINI_MODELS.includes(initialSettings.titleGenerationModel)) {
+      initialSettings.titleGenerationModel = DEFAULT_TITLE_MODEL;
     }
-    
-    // 如果用户也没有设置 llmProvider，则默认使用 gemini
-    if (!initialSettings.llmProvider) {
-      initialSettings.llmProvider = 'gemini';
-    }
-    
+
     setSettings(initialSettings);
     setLanguage(initialSettings.language);
     setIsStorageLoaded(true);
@@ -103,25 +83,23 @@ export const useSettings = () => {
   }, [settings, isStorageLoaded, setLanguage]);
 
   useEffect(() => {
-    const apiKeys = settings.apiKey || (process.env.API_KEY ? [process.env.API_KEY] : []);
-    if (isStorageLoaded && apiKeys.length > 0) {
-      const llmService = createLLMService(settings);
-      llmService.getAvailableModels(apiKeys[0], settings.apiBaseUrl).then(models => {
-        if (!models || models.length === 0) return;
-        setAvailableModels(models);
-        setSettings(current => {
-          const newDefaults: Partial<Settings> = {};
-          if (!models.includes(current.defaultModel)) {
-            newDefaults.defaultModel = models[0] || '';
-          }
-          if (!models.includes(current.titleGenerationModel)) {
-            newDefaults.titleGenerationModel = models.find(m => m.includes('flash') || m.includes('lite')) || models[0] || '';
-          }
-          return Object.keys(newDefaults).length > 0 ? { ...current, ...newDefaults } : current;
-        });
-      });
+    if (!isStorageLoaded) {
+      setAvailableModels(DEFAULT_GEMINI_MODELS);
+      return;
     }
-  }, [isStorageLoaded, settings.apiKey, settings.apiBaseUrl, settings.llmProvider]);
+
+    setAvailableModels(DEFAULT_GEMINI_MODELS);
+    setSettings(current => {
+      const updates: Partial<Settings> = {};
+      if (!DEFAULT_GEMINI_MODELS.includes(current.defaultModel)) {
+        updates.defaultModel = DEFAULT_MODEL;
+      }
+      if (!DEFAULT_GEMINI_MODELS.includes(current.titleGenerationModel)) {
+        updates.titleGenerationModel = DEFAULT_TITLE_MODEL;
+      }
+      return Object.keys(updates).length > 0 ? { ...current, ...updates } : current;
+    });
+  }, [isStorageLoaded, setSettings]);
 
   return { settings, setSettings, availableModels, isStorageLoaded };
 };
