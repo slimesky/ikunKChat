@@ -1,155 +1,81 @@
+export const config = {
+  runtime: 'edge',
+};
+
 const DEFAULT_PROXY_BASE = (process.env.PROXY_GEMINI_BASE || process.env.GOOGLE_PROXY_BASE || 'https://key.lixining.com/proxy/google').replace(/\/$/, '');
 const DEFAULT_API_KEY = (process.env.GEMINI_API_KEY || process.env.API_KEY || 'sk-lixining').trim();
 
-const ALLOWED_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
-
-function buildTargetUrl(req: any): string {
-  const pathParam = req.query?.path;
-  const segments = Array.isArray(pathParam)
-    ? pathParam
-    : typeof pathParam === 'string'
-      ? [pathParam]
-      : [];
-
-  const query = new URLSearchParams();
-  const queryEntries = req.query ? Object.entries(req.query) : [];
-  for (const [key, value] of queryEntries) {
-    if (key === 'path') continue;
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (item !== undefined) {
-          query.append(key, String(item));
-        }
-      }
-    } else if (value !== undefined) {
-      query.append(key, String(value));
-    }
-  }
-
-  const pathSuffix = segments.join('/');
-  const queryString = query.toString();
-  const targetPath = pathSuffix ? `/${pathSuffix}` : '';
-  const targetQuery = queryString ? `?${queryString}` : '';
-
-  return `${DEFAULT_PROXY_BASE}${targetPath}${targetQuery}`;
-}
-
-function applyCorsHeaders(res: any, req: any) {
-  res.setHeader('Access-Control-Allow-Origin', req.headers?.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS);
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    req.headers?.['access-control-request-headers'] || 'content-type,x-goog-api-key'
-  );
-  res.setHeader('Access-Control-Expose-Headers', '*');
-}
-
-function buildForwardHeaders(req: any): Headers {
+function createCorsHeaders(request: Request): Headers {
+  const origin = request.headers.get('origin') || '*';
   const headers = new Headers();
-  const incoming = req.headers ? Object.entries(req.headers) : [];
+  headers.set('Access-Control-Allow-Origin', origin);
+  headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  headers.set('Access-Control-Allow-Headers', request.headers.get('access-control-request-headers') || 'content-type,x-goog-api-key');
+  headers.set('Access-Control-Expose-Headers', '*');
+  headers.set('Vary', 'Origin');
+  return headers;
+}
 
-  for (const [key, value] of incoming) {
-    if (!value) continue;
-    if (key.toLowerCase() === 'host' || key.toLowerCase() === 'connection') continue;
-    if (Array.isArray(value)) {
-      headers.set(key, value.join(','));
-    } else {
-      headers.set(key, value);
-    }
-  }
+function buildTargetUrl(requestUrl: URL): string {
+  const pathSuffix = requestUrl.pathname.replace(/^\/api\/gemini/, '');
+  const trimmedPath = pathSuffix.replace(/^\/+/g, '');
+  const targetPath = trimmedPath ? `/${trimmedPath}` : '';
+  const queryString = requestUrl.search || '';
+  return `${DEFAULT_PROXY_BASE}${targetPath}${queryString}`;
+}
+
+function buildForwardHeaders(request: Request): Headers {
+  const headers = new Headers(request.headers);
+
+  headers.delete('host');
+  headers.delete('connection');
+  headers.delete('content-length');
+  headers.delete('accept-encoding');
 
   const apiKey = headers.get('x-goog-api-key');
   if (!apiKey || apiKey.trim().length === 0) {
     headers.set('x-goog-api-key', DEFAULT_API_KEY);
   }
 
-  headers.delete('content-length');
-
   return headers;
 }
 
-function resolveBody(req: any, headers: Headers): BodyInit | undefined {
-  const method = req.method?.toUpperCase();
-  if (!method || method === 'GET' || method === 'HEAD') {
-    return undefined;
+export default async function handler(request: Request): Promise<Response> {
+  const corsHeaders = createCorsHeaders(request);
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  const body = req.body;
+  const targetUrl = buildTargetUrl(new URL(request.url));
+  const forwardHeaders = buildForwardHeaders(request);
 
-  if (body === undefined || body === null) {
-    return undefined;
-  }
-
-  if (typeof body === 'string' || body instanceof Buffer || body instanceof Uint8Array) {
-    return body as BodyInit;
-  }
-
-  if (!headers.has('content-type')) {
-    headers.set('content-type', 'application/json');
-  }
-
-  return JSON.stringify(body);
-}
-
-async function pipeResponse(stream: ReadableStream<Uint8Array> | null, res: any) {
-  if (!stream) {
-    res.end();
-    return;
-  }
-
-  const reader = stream.getReader();
+  let response: Response;
   try {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (value) {
-        res.write(Buffer.from(value));
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  res.end();
-}
-
-export default async function handler(req: any, res: any) {
-  applyCorsHeaders(res, req);
-
-  if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
-  }
-
-  const targetUrl = buildTargetUrl(req);
-  const headers = buildForwardHeaders(req);
-  const body = resolveBody(req, headers);
-
-  try {
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers,
-      body,
+    response = await fetch(targetUrl, {
+      method: request.method,
+      headers: forwardHeaders,
+      body: request.body,
       redirect: 'follow',
     });
-
-    res.status(response.status);
-    response.headers.forEach((value, key) => {
-      if (key.toLowerCase() === 'content-length') return;
-      res.setHeader(key, value);
+  } catch (error) {
+    console.error('Gemini proxy network error:', error);
+    const headers = new Headers(corsHeaders);
+    headers.set('Content-Type', 'application/json');
+    return new Response(JSON.stringify({ error: 'Failed to contact Gemini proxy.' }), {
+      status: 502,
+      headers,
     });
-    applyCorsHeaders(res, req);
-
-    if (!response.body) {
-      const buffer = Buffer.from(await response.arrayBuffer());
-      res.end(buffer);
-      return;
-    }
-
-    await pipeResponse(response.body, res);
-  } catch (error: any) {
-    console.error('Gemini proxy error:', error);
-    res.status(502);
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Failed to contact Gemini proxy.' }));
   }
+
+  const responseHeaders = new Headers(response.headers);
+  corsHeaders.forEach((value, key) => {
+    responseHeaders.set(key, value);
+  });
+  responseHeaders.delete('content-length');
+
+  return new Response(response.body, {
+    status: response.status,
+    headers: responseHeaders,
+  });
 }
