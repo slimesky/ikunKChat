@@ -20,16 +20,6 @@ export const AppContainer: React.FC = () => {
 
   // 应用初始化相关Hook
   const {
-    needRefresh,
-    updateStatus,
-    updateServiceWorker,
-    checkForUpdates,
-    showUpdateNotice,
-    isCheckingUpdate,
-    handleUpdateNow,
-    handleCheckForUpdates,
-    handleCloseUpdateNotice,
-    handleDismissUpdateNotice,
     getLatestVersion
   } = useAppInitialization();
 
@@ -153,11 +143,6 @@ export const AppContainer: React.FC = () => {
       onOpenArchive={() => handleOpenView('archive')}
       onToggleMobileSidebar={toggleMobileSidebar}
       onSidebarStateChange={handleSidebarStateChange}
-      updateAvailable={needRefresh}
-      isCheckingUpdate={isCheckingUpdate}
-      onCheckForUpdates={handleCheckForUpdates}
-      onUpdateNow={handleUpdateNow}
-      versionInfo={getLatestVersion()}
     >
       <AppContent
         currentView={currentView}
@@ -213,9 +198,6 @@ export const AppContainer: React.FC = () => {
         availableModels={availableModels}
         personas={personas}
         versionInfo={getLatestVersion()}
-        showUpdateNotice={showUpdateNotice}
-        onCloseUpdateNotice={handleCloseUpdateNotice}
-        onDismissUpdateNotice={handleDismissUpdateNotice}
         editingChat={uiState.editingChat}
         onCloseEditChat={uiState.closeEditChat}
         onSaveChatDetails={chatDataHandlers.handleUpdateChatDetails}
@@ -239,7 +221,7 @@ export const AppContainer: React.FC = () => {
         folders={folders}
         showChatClearSelector={showChatClearSelector}
         onCloseChatClearSelector={() => setShowChatClearSelector(false)}
-        onClearSelectedChats={(selectedChatIds) => 
+        onClearSelectedChats={(selectedChatIds) =>
           handleClearSelectedChats(selectedChatIds, chats, activeChatId, setActiveChatId, setChats)
         }
       />

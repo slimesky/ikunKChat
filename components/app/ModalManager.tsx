@@ -3,8 +3,6 @@ import { EditChatModal } from '../EditChatModal';
 import { FolderActionModal } from '../FolderActionModal';
 import { CitationDrawer } from '../CitationDrawer';
 import { MessageEditModal } from '../MessageEditModal';
-import { UpdateSettings } from '../settings/UpdateSettings';
-import { UpdateNoticeModal } from '../UpdateNoticeModal';
 import { ChatSession, Folder, Settings, Persona, Message } from '../../types';
 
 // Lazy load heavy modals
@@ -29,11 +27,6 @@ interface ModalManagerProps {
   availableModels: string[];
   personas: Persona[];
   versionInfo: any;
-
-  // Update Notice Modal
-  showUpdateNotice: boolean;
-  onCloseUpdateNotice: () => void;
-  onDismissUpdateNotice: () => void;
 
   // Edit Chat Modal
   editingChat: ChatSession | null;
@@ -64,15 +57,6 @@ interface ModalManagerProps {
   confirmation: { title: string; message: string; onConfirm: () => void } | null;
   onCloseConfirmation: () => void;
 
-  // Update Settings Modal
-  showUpdateSettings: boolean;
-  onCloseUpdateSettings: () => void;
-  onCheckUpdate: () => void;
-  onUpdateNow: () => void;
-  isCheckingUpdate: boolean;
-  updateAvailable: boolean;
-  updateStatus: string;
-
   // Chat Export Selector
   showChatExportSelector: boolean;
   onCloseChatExportSelector: () => void;
@@ -102,9 +86,6 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
   availableModels,
   personas,
   versionInfo,
-  showUpdateNotice,
-  onCloseUpdateNotice,
-  onDismissUpdateNotice,
   editingChat,
   onCloseEditChat,
   onSaveChatDetails,
@@ -122,13 +103,6 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
   onCloseLightbox,
   confirmation,
   onCloseConfirmation,
-  showUpdateSettings,
-  onCloseUpdateSettings,
-  onCheckUpdate,
-  onUpdateNow,
-  isCheckingUpdate,
-  updateAvailable,
-  updateStatus,
   showChatExportSelector,
   onCloseChatExportSelector,
   chats,
@@ -139,15 +113,6 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
 }) => {
   return (
     <>
-      {/* Update Notice Modal - 重要更新通知 */}
-      {showUpdateNotice && versionInfo && (
-        <UpdateNoticeModal
-          versionInfo={versionInfo}
-          onClose={onCloseUpdateNotice}
-          onDismiss={onDismissUpdateNotice}
-        />
-      )}
-
       {/* Lazy loaded modals */}
       <Suspense fallback={null}>
         {isSettingsOpen && (
@@ -229,17 +194,6 @@ export const ModalManager: React.FC<ModalManagerProps> = ({
             }
             onCloseEditMessage();
           }}
-        />
-      )}
-      {showUpdateSettings && (
-        <UpdateSettings
-          versionInfo={versionInfo}
-          onClose={onCloseUpdateSettings}
-          onCheckUpdate={onCheckUpdate}
-          onUpdateNow={onUpdateNow}
-          isCheckingUpdate={isCheckingUpdate}
-          updateAvailable={updateAvailable}
-          updateStatus={updateStatus}
         />
       )}
     </>
